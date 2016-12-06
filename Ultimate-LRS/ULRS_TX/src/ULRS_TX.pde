@@ -167,6 +167,8 @@ void loop()
 			}
 
 			Rx_Pack_Received = 0;
+			LostSignal = false; // Reset LostSignal to false (has signal)
+
 			red_led(false);
 		}
 
@@ -243,20 +245,45 @@ void loop()
 			Hopping();
 			rx_reset();
 
+			if (Rx_Pack_Received >= Lost_Package_Alert + 50) // if lost +50 more packets than Lost_Package_Alert
+			{
+				LostSignal = true; // Set LostSignal to true (Lost Signal)
+			}
+
 			if (Rx_Pack_Received >= Lost_Package_Alert)
 			{
 				Rx_RSSI = 0;
 				analogWrite(RSSI_out_pin, 0);
 
-				if (IsBuzzerEnabled)
+				if (IsBuzzerEnabled && LinkInit)
+				{
+					unsigned long currentMillis = millis();
+
+				if (LostSignal) // if lost +50 more packets than Lost_Package_Alert
+				{
+				if (currentMillis - buzpreviousMillis >= buzinterval) // Buz at buzinterval rate
+				{
+				buzpreviousMillis = currentMillis;
+				for (int i = 0; i < 3; i++)
 				{
 					digitalWrite(BUZZER, HIGH);
+					delay(20);
+					digitalWrite(BUZZER, LOW);
+					delay(5);
+				}
+					}
+				}
+
+				else // Lost packets
+				{
+					digitalWrite(BUZZER, HIGH); // Less than Lost_Package_Alert + 50, so Buzzer full on
+				}
 				}
 			}
 
 			else
 			{
-				digitalWrite(BUZZER, LOW);
+				digitalWrite(BUZZER, LOW); // Buzzer disalbed
 			}
 
 			Rx_Pack_Received++;
@@ -278,7 +305,7 @@ void BuzzerHello()
 	for (int i = 0; i < 4; i++)
 	{
 		digitalWrite(BUZZER, HIGH);
-		delay(30);
+		delay(150);
 		digitalWrite(BUZZER, LOW);
 		delay(30);
 	}
