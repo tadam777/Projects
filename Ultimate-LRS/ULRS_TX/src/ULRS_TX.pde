@@ -140,6 +140,8 @@ void loop()
 		{
 			red_led(true);
 
+			LinkInit = true;
+
 			if (debug)
 			{
 				Serial.print(" AFC ");
